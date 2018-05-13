@@ -1,4 +1,5 @@
 #![allow(unused_imports)]
+use std::env;
 use std::fmt;
 use std::io;
 use std::io::Write;
@@ -31,30 +32,33 @@ impl fmt::Display for ExpectErr {
     }
 }
 
-impl Write for Snapshot {
-    fn write(&mut self, text: &[u8]) -> io::Result<usize> {
-        let t = str::from_utf8(text).unwrap();
-        self.buf.push_str(t);
-        Ok(text.len())
-    }
-
-    fn flush(&mut self) -> io::Result<()> {
-        Ok(())
-    }
-}
-
 impl Snapshot {
     pub fn new(file_name: String) -> Snapshot {
         let buf = String::new();
         Snapshot { file_name, buf }
     }
-    pub fn finish(&self) -> std::result::Result<(), ExpectErr> {
-        let f = File::open(&self.file_name);
-        let mut expectation = String::new();
-        match f {
-            Ok(mut i) => i.read_to_string(&mut expectation).unwrap(),
-            Err(_i) => 0,
+
+    pub fn push(&mut self, text: &[u8]) {
+        let t = str::from_utf8(text).unwrap();
+        self.buf.push_str(t);
+    }
+
+    fn expectation(&self) -> String {
+        let mut contents = String::new();
+        let path = env::current_dir()
+            .unwrap()
+            .join("expect")
+            .join(&self.file_name);
+        let file = File::open(path);
+        match file {
+            Ok(mut f) => f.read_to_string(&mut contents).unwrap(),
+            Err(_f) => 0,
         };
+        contents
+    }
+
+    pub fn finish(&self) -> std::result::Result<(), ExpectErr> {
+        let expectation = self.expectation();
         let result = self.buf.clone();
         if result == expectation {
             Ok(())
@@ -73,12 +77,18 @@ mod tests {
 
     #[test]
     fn create_snapshot() {
-        let s = Snapshot::new(String::from("test"));
+        let _s = Snapshot::new(String::from("test1"));
     }
     #[test]
-    fn write_to_snapshot() {
-        let mut s = Snapshot::new(String::from("test"));
-        s.write(&"x".as_bytes()).unwrap();
+    fn write_to_snapshot_incorrect() {
+        let mut s = Snapshot::new(String::from("test1"));
+        s.push(&"x".as_bytes());
         assert!(s.finish().is_err());
+    }
+    #[test]
+    fn write_to_snapshot_correct() {
+        let mut s = Snapshot::new(String::from("test1"));
+        s.push(&"hello".as_bytes());
+        assert!(s.finish().is_ok());
     }
 }
