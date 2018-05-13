@@ -1,0 +1,6 @@
+[package]
+name = "expect-test"
+version = "0.1.0"
+authors = ["Maximilian Roos <m@maxroos.com>"]
+
+[dependencies]
