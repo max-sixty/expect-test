@@ -38,9 +38,8 @@ impl Expect {
         Expect { file_name, buf }
     }
 
-    pub fn push(&mut self, text: &[u8]) {
-        let t = str::from_utf8(text).unwrap();
-        self.buf.push_str(t);
+    pub fn push(&mut self, s: &str) {
+        self.buf.push_str(s);
     }
 
     fn expectation(&self) -> String {
@@ -82,20 +81,20 @@ mod tests {
     #[test]
     fn write_to_expect_incorrect() {
         let mut s = Expect::new(String::from("test1"));
-        s.push(&"x".as_bytes());
+        s.push("x");
         assert!(s.finish().is_err());
     }
     #[test]
     fn write_to_expect_multiple_correct() {
         let mut s = Expect::new(String::from("test1"));
-        s.push(&"he".as_bytes());
-        s.push(&"llo".as_bytes());
+        s.push("he");
+        s.push("llo");
         assert!(s.finish().is_ok());
     }
     #[test]
     fn write_to_expect_correct() {
         let mut s = Expect::new(String::from("test1"));
-        s.push(&"hello".as_bytes());
+        s.push("hello");
         assert!(s.finish().is_ok());
     }
 }
