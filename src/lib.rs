@@ -9,7 +9,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 
-pub struct Snapshot {
+pub struct Expect {
     pub file_name: String,
     buf: String,
 }
@@ -32,10 +32,10 @@ impl fmt::Display for ExpectErr {
     }
 }
 
-impl Snapshot {
-    pub fn new(file_name: String) -> Snapshot {
+impl Expect {
+    pub fn new(file_name: String) -> Expect {
         let buf = String::new();
-        Snapshot { file_name, buf }
+        Expect { file_name, buf }
     }
 
     pub fn push(&mut self, text: &[u8]) {
@@ -76,18 +76,25 @@ mod tests {
     use super::*;
 
     #[test]
-    fn create_snapshot() {
-        let _s = Snapshot::new(String::from("test1"));
+    fn create_expect() {
+        let _s = Expect::new(String::from("test1"));
     }
     #[test]
-    fn write_to_snapshot_incorrect() {
-        let mut s = Snapshot::new(String::from("test1"));
+    fn write_to_expect_incorrect() {
+        let mut s = Expect::new(String::from("test1"));
         s.push(&"x".as_bytes());
         assert!(s.finish().is_err());
     }
     #[test]
-    fn write_to_snapshot_correct() {
-        let mut s = Snapshot::new(String::from("test1"));
+    fn write_to_expect_multiple_correct() {
+        let mut s = Expect::new(String::from("test1"));
+        s.push(&"he".as_bytes());
+        s.push(&"llo".as_bytes());
+        assert!(s.finish().is_ok());
+    }
+    #[test]
+    fn write_to_expect_correct() {
+        let mut s = Expect::new(String::from("test1"));
         s.push(&"hello".as_bytes());
         assert!(s.finish().is_ok());
     }
