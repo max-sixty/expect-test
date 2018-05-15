@@ -6,8 +6,11 @@ use std::io::Write;
 use std::str;
 
 use std::error::Error;
+use std::fs;
 use std::fs::File;
 use std::io::prelude::*;
+#[macro_use]
+extern crate pretty_assertions;
 
 pub struct Expect {
     pub file_name: String,
@@ -43,16 +46,11 @@ impl Expect {
     }
 
     fn expectation(&self) -> String {
-        let mut contents = String::new();
         let path = env::current_dir()
             .unwrap()
             .join("expect")
             .join(&self.file_name);
-        let file = File::open(path);
-        match file {
-            Ok(mut f) => f.read_to_string(&mut contents).unwrap(),
-            Err(_f) => 0,
-        };
+        let contents = fs::read_to_string(path).unwrap();
         contents
     }
 
@@ -62,6 +60,7 @@ impl Expect {
         if result == expectation {
             Ok(())
         } else {
+            // assert_eq!(result, expectation);
             Err(ExpectErr {
                 result,
                 expectation,
@@ -76,6 +75,7 @@ mod tests {
 
     #[test]
     fn create_expect() {
+        let _s = Expect::new("test1".to_string());
         let _s = Expect::new(String::from("test1"));
     }
     #[test]
