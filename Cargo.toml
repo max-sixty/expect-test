@@ -5,3 +5,4 @@ authors = ["Maximilian Roos <m@maxroos.com>"]
 
 [dependencies]
 pretty_assertions = "^0.2.0"
+difference="1.0.0"

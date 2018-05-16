@@ -11,16 +11,18 @@ use std::fs::File;
 use std::io::prelude::*;
 #[macro_use]
 extern crate pretty_assertions;
+extern crate difference;
+use difference::{Changeset, Difference};
 
 pub struct Expect {
     pub file_name: String,
     buf: String,
 }
 
-#[derive(Debug)]
+// #[derive(Debug)]
 pub struct ExpectErr {
-    result: String,
-    expectation: String,
+    #[allow(dead_code)]
+    changeset: Changeset,
 }
 
 impl Error for ExpectErr {
@@ -29,6 +31,11 @@ impl Error for ExpectErr {
     }
 }
 
+impl fmt::Debug for ExpectErr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Oh no, something bad went down")
+    }
+}
 impl fmt::Display for ExpectErr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Oh no, something bad went down")
@@ -45,26 +52,22 @@ impl Expect {
         self.buf.push_str(s);
     }
 
-    fn expectation(&self) -> String {
-        let path = env::current_dir()
-            .unwrap()
-            .join("expect")
-            .join(&self.file_name);
-        let contents = fs::read_to_string(path).unwrap();
-        contents
+    fn expectation(&self) -> Result<String, io::Error> {
+        fs::read_to_string(
+            env::current_dir()
+                .unwrap()
+                .join("expect")
+                .join(&self.file_name),
+        )
     }
 
     pub fn finish(&self) -> std::result::Result<(), ExpectErr> {
-        let expectation = self.expectation();
+        let expectation = self.expectation().unwrap();
         let result = self.buf.clone();
-        if result == expectation {
-            Ok(())
-        } else {
-            // assert_eq!(result, expectation);
-            Err(ExpectErr {
-                result,
-                expectation,
-            })
+        let changeset = Changeset::new(&expectation, &result, "\"\"");
+        match changeset.distance {
+            0 => Ok(()),
+            _ => Err(ExpectErr { changeset }),
         }
     }
 }
@@ -97,4 +100,6 @@ mod tests {
         s.push("hello");
         assert!(s.finish().is_ok());
     }
+    #[test]
+    fn t() {}
 }
